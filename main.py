@@ -1,15 +1,28 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base
 from routes import user, record, dashboard
+import uvicorn
+import os
 
 # 1. Initialize Tables (SQLite database will be created if not exists)
 Base.metadata.create_all(bind=engine)
 
 # 2. Main Application Instance
 app = FastAPI(
-    title="Finance Dashboard Project",
-    description="A beginner-friendly Backend for managing financial records.",
-    version="1.0.0"
+    title="Finance Dashboard API",
+    description="A minimalist, beginner-friendly backend API for managing financial records and viewing analytical summaries.",
+    version="1.1.0"
+)
+
+# 3. Middleware Configuration
+# Standard CORS setup to allow frontend applications to communicate with the API
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # In production, replace with specific frontend domains
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # 3. Include Sub-Routers
@@ -18,7 +31,7 @@ app.include_router(record.router)
 app.include_router(dashboard.router)
 
 # 4. Root Endpoint
-@app.get("/")
+@app.get("/", summary="Check API Health", description="Returns a simple welcome message to verify the API is running correctly.")
 def read_root():
     return {"message": "Welcome to the Finance Dashboard System API!"}
 
@@ -26,28 +39,15 @@ def read_root():
 # README / TEST INSTRUCTIONS
 # =====================================================================
 """
-HOW TO RUN:
-1. Open terminal and navigate to the project folder.
-2. Install dependencies:
-   pip install fastapi pydantic sqlalchemy uvicorn
-3. Run the development server:
-   uvicorn main:app --reload
-4. Open the documentation in your browser:
-   http://127.0.0.1:8000/docs
-   
-HOW TO TEST (Using the /docs Swagger UI):
-1. Create an Admin User (Using /users POST endpoint):
-   Body -> { "name": "Admin", "email": "admin@test.com", "role": "admin" }
+HOW TO RUN locally:
+    uvicorn main:app --reload
 
-2. Create an Analyst User:
-   Body -> { "name": "Alice", "email": "analyst@test.com", "role": "analyst" }
-
-3. Create a Financial Record (Admin only route):
-   - Click "Try it out" 
-   - Add Header "x-user-email: admin@test.com"
-   - Body -> { "user_id": 1, "amount": 1000, "type": "income", "category": "Salary", "date": "2024-01-01" }
-
-4. Get Dashboard Summary (Analyst or Admin):
-   - Add Header "x-user-email: analyst@test.com"
-   (Calling this route without header or without right role will result in 403 Forbidden Error!)
+HOW TO TEST:
+Visit http://127.0.0.1:8000/docs for the interactive Swagger UI.
 """
+
+# 6. Deployment Start Command
+# This allows the app to be run directly via `python main.py` or deployed dynamically
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)

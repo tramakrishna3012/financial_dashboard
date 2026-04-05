@@ -10,7 +10,7 @@ from dependencies import get_db, require_analyst
 
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 
-@router.get("/summary", response_model=schemas.DashboardSummary)
+@router.get("/summary", response_model=schemas.DashboardSummary, summary="Get dashboard totals", description="Calculates the overall project total income, total expenses, net balance, and seamlessly aggregates sums natively by category.")
 def get_dashboard_summary(
     db: Session = Depends(get_db), 
     user: models.User = Depends(require_analyst) # restricted to Analyst or Admin
@@ -42,7 +42,7 @@ def get_dashboard_summary(
         category_totals=category_totals
     )
 
-@router.get("/recent", response_model=list[schemas.RecordResponse])
+@router.get("/recent", response_model=list[schemas.RecordResponse], summary="Get recent activity", description="Fetches the most recently added financial records strictly ordered by their action date descending.")
 def get_recent_activity(
     limit: int = 10,
     db: Session = Depends(get_db),
@@ -50,7 +50,7 @@ def get_recent_activity(
 ):
     return crud.get_recent_records(db, limit=limit)
 
-@router.get("/trends")
+@router.get("/trends", summary="Get monthly trends", description="Deeply groups financial records by Year/Month keys and maps income vs expenses out dynamically.")
 def get_monthly_trends(
     db: Session = Depends(get_db),
     user: models.User = Depends(require_analyst)
