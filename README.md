@@ -41,7 +41,7 @@ finance_dashboard/
 1. **Install python packages**:
    Open a terminal in the folder where this code is saved, and install the required dependencies:
    ```bash
-   pip install fastapi pydantic sqlalchemy uvicorn
+   pip install fastapi "pydantic[email]" sqlalchemy uvicorn
    ```
 
 2. **Start the FastAPI server**:

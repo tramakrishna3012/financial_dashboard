@@ -1,4 +1,6 @@
 from sqlalchemy.orm import Session
+from datetime import date
+from typing import Optional
 import models
 import schemas
 
@@ -22,7 +24,15 @@ def create_user(db: Session, user: schemas.UserCreate):
 def get_record(db: Session, record_id: int):
     return db.query(models.Record).filter(models.Record.id == record_id).first()
 
-def get_records(db: Session, skip: int = 0, limit: int = 100, record_type: str = None, category: str = None):
+def get_records(
+    db: Session, 
+    skip: int = 0, 
+    limit: int = 100, 
+    record_type: str = None, 
+    category: str = None,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None
+):
     query = db.query(models.Record)
     
     # Apply optional filters
@@ -30,8 +40,15 @@ def get_records(db: Session, skip: int = 0, limit: int = 100, record_type: str =
         query = query.filter(models.Record.type == record_type)
     if category:
         query = query.filter(models.Record.category == category)
+    if start_date:
+        query = query.filter(models.Record.date >= start_date)
+    if end_date:
+        query = query.filter(models.Record.date <= end_date)
         
-    return query.offset(skip).limit(limit).all()
+    return query.order_by(models.Record.date.desc()).offset(skip).limit(limit).all()
+
+def get_recent_records(db: Session, limit: int = 10):
+    return db.query(models.Record).order_by(models.Record.date.desc()).limit(limit).all()
 
 def create_record(db: Session, record: schemas.RecordCreate):
     db_record = models.Record(**record.model_dump())

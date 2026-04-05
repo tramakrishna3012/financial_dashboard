@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List, Optional
+from datetime import date
 
 import crud
 import schemas
@@ -25,10 +26,26 @@ def get_all_records(
     limit: int = 100, 
     type: Optional[str] = None, 
     category: Optional[str] = None,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_viewer) # Viewer (or higher) allowed to read
 ):
-    return crud.get_records(db, skip=skip, limit=limit, record_type=type, category=category)
+    return crud.get_records(
+        db, skip=skip, limit=limit, record_type=type, category=category,
+        start_date=start_date, end_date=end_date
+    )
+
+@router.get("/{record_id}", response_model=schemas.RecordResponse)
+def get_single_record(
+    record_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_viewer)
+):
+    db_record = crud.get_record(db, record_id=record_id)
+    if not db_record:
+        raise HTTPException(status_code=404, detail="Record not found")
+    return db_record
 
 @router.put("/{record_id}", response_model=schemas.RecordResponse)
 def update_record(

@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import func
+from collections import defaultdict
 
+import crud
 import models
 import schemas
 from dependencies import get_db, require_analyst
@@ -39,3 +41,23 @@ def get_dashboard_summary(
         net_balance=net_balance,
         category_totals=category_totals
     )
+
+@router.get("/recent", response_model=list[schemas.RecordResponse])
+def get_recent_activity(
+    limit: int = 10,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(require_analyst)
+):
+    return crud.get_recent_records(db, limit=limit)
+
+@router.get("/trends")
+def get_monthly_trends(
+    db: Session = Depends(get_db),
+    user: models.User = Depends(require_analyst)
+):
+    records = db.query(models.Record).all()
+    monthly = defaultdict(lambda: {"income": 0.0, "expense": 0.0})
+    for r in records:
+        key = f"{r.date.year}-{str(r.date.month).zfill(2)}"
+        monthly[key][r.type] += r.amount
+    return {"monthly_trends": dict(sorted(monthly.items()))}

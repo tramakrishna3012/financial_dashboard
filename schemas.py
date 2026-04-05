@@ -1,12 +1,18 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import date
+from enum import Enum
 
 # ----------------- User Schemas -----------------
+class UserRole(str, Enum):
+    viewer = "viewer"
+    analyst = "analyst"
+    admin = "admin"
+
 class UserBase(BaseModel):
     name: str
     email: EmailStr
-    role: str = "viewer"
+    role: UserRole = UserRole.viewer
 
 class UserCreate(UserBase):
     pass
